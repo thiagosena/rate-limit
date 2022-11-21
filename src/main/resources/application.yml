@@ -7,3 +7,29 @@ spring:
     show-sql: 'true'
     hibernate:
       ddl-auto: update
+  cache:
+    type: jcache
+    jcache:
+      provider: com.hazelcast.cache.impl.HazelcastServerCachingProvider
+  main:
+    allow-bean-definition-overriding: true
+
+bucket4j:
+  enabled: true
+  filters:
+    - cache-name: messageRateLimit
+      url: /messages*
+      filter-order: 100
+      rate-limits:
+        - execute-condition: "@securityService.isAuthenticated()"
+          expression: "@securityService.getUser()"
+          bandwidths:
+            - capacity: 10
+              time: 60
+              unit: seconds
+        - execute-condition: "@securityService.isNotAuthenticated()"
+          expression: "getRemoteAddr()"
+          bandwidths:
+            - capacity: 5
+              time: 120
+              unit: seconds
